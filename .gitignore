@@ -1,0 +1,9 @@
+target/
+results/
+pgdata/
+grafana/
+influx/
+.idea/
+*.iml
+*.log
+.DS_Store
