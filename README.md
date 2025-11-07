@@ -297,4 +297,3 @@ o	Documenter clairement les endpoints, projections et mappings JPA pour facilite
 
 
 
-<img width="532" height="758" alt="image" src="https://github.com/user-attachments/assets/942243bd-0133-4a53-9cbb-aaa5f519ff43" />
