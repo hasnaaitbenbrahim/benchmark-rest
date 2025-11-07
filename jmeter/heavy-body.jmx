@@ -1,7 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <jmeterTestPlan version="1.2" properties="5.0" jmeter="5.6.3">
   <hashTree>
-    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="heavy-body" enabled="true">
+    <TestPlan guiclass="TestPlanGui" testclass="TestPlan" testname="read-heavy" enabled="true">
+      <stringProp name="TestPlan.comments">50% GET /items?page=0&size=50; 20% GET /items?categoryId=...; 20% GET /categories/{id}/items; 10% GET /categories?page=0&size=50</stringProp>
+      <boolProp name="TestPlan.functional_mode">false</boolProp>
       <boolProp name="TestPlan.serialize_threadgroups">true</boolProp>
       <elementProp name="TestPlan.user_defined_variables" elementType="Arguments" guiclass="ArgumentsPanel" testclass="Arguments" testname="User Defined Variables" enabled="true">
         <collectionProp name="Arguments.arguments">
@@ -12,24 +14,16 @@
           <elementProp name="influxBucket" elementType="Argument"><stringProp name="Argument.value">${__P(influxBucket,jmeter)}</stringProp></elementProp>
         </collectionProp>
       </elementProp>
+      <stringProp name="TestPlan.user_define_classpath"/>
     </TestPlan>
     <hashTree>
       <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV ids.csv" enabled="true">
         <stringProp name="filename">jmeter/data/ids.csv</stringProp>
+        <stringProp name="fileEncoding">UTF-8</stringProp>
         <stringProp name="variableNames">itemId,categoryId</stringProp>
         <boolProp name="ignoreFirstLine">true</boolProp>
         <stringProp name="delimiter">,</stringProp>
-        <boolProp name="recycle">true</boolProp>
-        <boolProp name="stopThread">false</boolProp>
-        <stringProp name="shareMode">shareMode.all</stringProp>
-      </CSVDataSet>
-      <hashTree/>
-
-      <CSVDataSet guiclass="TestBeanGUI" testclass="CSVDataSet" testname="CSV payloads_5k.csv" enabled="true">
-        <stringProp name="filename">jmeter/data/payloads_5k.csv</stringProp>
-        <stringProp name="variableNames">payload</stringProp>
-        <boolProp name="ignoreFirstLine">true</boolProp>
-        <stringProp name="delimiter">,</stringProp>
+        <boolProp name="quotedData">false</boolProp>
         <boolProp name="recycle">true</boolProp>
         <boolProp name="stopThread">false</boolProp>
         <stringProp name="shareMode">shareMode.all</stringProp>
@@ -38,51 +32,153 @@
 
       <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults" enabled="true">
         <elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
-        <stringProp name="HTTPSampler.domain">${__BeanShell(new java.net.URL(vars.get("baseUrl")).getHost(),)}</stringProp>
-        <stringProp name="HTTPSampler.port">${__BeanShell(new java.net.URL(vars.get("baseUrl")).getPort()==-1?"80":new java.net.URL(vars.get("baseUrl")).getPort(),)}</stringProp>
-        <stringProp name="HTTPSampler.protocol">${__BeanShell(new java.net.URL(vars.get("baseUrl")).getProtocol(),)}</stringProp>
+        <stringProp name="HTTPSampler.domain">${__BeanShell(new java.net.URL(props.get("baseUrl")).getHost(),)}</stringProp>
+        <stringProp name="HTTPSampler.port">${__BeanShell(int port = new java.net.URL(props.get("baseUrl")).getPort(); return port == -1 ? "80" : String.valueOf(port);)}</stringProp>
+        <stringProp name="HTTPSampler.protocol">${__BeanShell(new java.net.URL(props.get("baseUrl")).getProtocol(),)}</stringProp>
         <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
       </ConfigTestElement>
       <hashTree/>
 
       <BackendListener guiclass="BackendListenerGui" testclass="BackendListener" testname="InfluxDB v2 Backend Listener" enabled="true">
         <stringProp name="classname">org.apache.jmeter.visualizers.backend.influxdb.InfluxDBBackendListenerClientV2</stringProp>
-        <elementProp name="arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"><elementProp name="influxdbUrl" elementType="Argument"><stringProp name="Argument.value">${influxUrl}</stringProp></elementProp><elementProp name="token" elementType="Argument"><stringProp name="Argument.value">${influxToken}</stringProp></elementProp><elementProp name="organization" elementType="Argument"><stringProp name="Argument.value">${influxOrg}</stringProp></elementProp><elementProp name="bucket" elementType="Argument"><stringProp name="Argument.value">${influxBucket}</stringProp></elementProp><elementProp name="testTitle" elementType="Argument"><stringProp name="Argument.value">heavy-body</stringProp></elementProp></collectionProp></elementProp>
+        <elementProp name="arguments" elementType="Arguments">
+          <collectionProp name="Arguments.arguments">
+            <elementProp name="influxdbUrl" elementType="Argument"><stringProp name="Argument.value">${influxUrl}</stringProp></elementProp>
+            <elementProp name="token" elementType="Argument"><stringProp name="Argument.value">${influxToken}</stringProp></elementProp>
+            <elementProp name="organization" elementType="Argument"><stringProp name="Argument.value">${influxOrg}</stringProp></elementProp>
+            <elementProp name="bucket" elementType="Argument"><stringProp name="Argument.value">${influxBucket}</stringProp></elementProp>
+            <elementProp name="testTitle" elementType="Argument"><stringProp name="Argument.value">read-heavy</stringProp></elementProp>
+          </collectionProp>
+        </elementProp>
       </BackendListener>
       <hashTree/>
 
-      <!-- Stage 1: 30 threads, 50% POST /items (5KB), 50% PUT /items/{id} (5KB) -->
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="stage-1-30" enabled="true">
+      <!-- Stage 1: 50 threads -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="stage-1-50" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
-        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true"><boolProp name="LoopController.continue_forever">false</boolProp><stringProp name="LoopController.loops">-1</stringProp></elementProp>
-        <stringProp name="ThreadGroup.num_threads">30</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">-1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">50</stringProp>
         <stringProp name="ThreadGroup.ramp_time">30</stringProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
         <stringProp name="ThreadGroup.duration">180</stringProp>
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
-        <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="50% POST /items (5KB)" enabled="true"><intProp name="ThroughputController.style">1</intProp><boolProp name="ThroughputController.perThread">false</boolProp><floatProp><name>ThroughputController.percent</name><value>50.0</value><savedValue>0.0</savedValue></floatProp></ThroughputController>
+        <!-- 50% GET /items?page=0&size=50 -->
+        <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="50% GET /items?page=0&size=50" enabled="true">
+          <intProp name="ThroughputController.style">1</intProp>
+          <boolProp name="ThroughputController.perThread">false</boolProp>
+          <doubleProp>
+            <name>ThroughputController.percent</name>
+            <value>50.0</value>
+            <savedValue>0.0</savedValue>
+          </doubleProp>
+        </ThroughputController>
         <hashTree>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="POST /items" enabled="true"><stringProp name="HTTPSampler.path">/items</stringProp><stringProp name="HTTPSampler.method">POST</stringProp><boolProp name="HTTPSampler.postBodyRaw">true</boolProp><elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"><elementProp name="body" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">${payload}</stringProp><stringProp name="Argument.metadata">=</stringProp></elementProp></collectionProp></elementProp></HTTPSamplerProxy>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /items?page=0&size=50" enabled="true">
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="page" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">0</stringProp><stringProp name="Argument.name">page</stringProp></elementProp>
+                <elementProp name="size" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">50</stringProp><stringProp name="Argument.name">size</stringProp></elementProp>
+              </collectionProp>
+            </elementProp>
+          </HTTPSamplerProxy>
           <hashTree/>
         </hashTree>
-        <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="50% PUT /items/{id} (5KB)" enabled="true"><intProp name="ThroughputController.style">1</intProp><boolProp name="ThroughputController.perThread">false</boolProp><floatProp><name>ThroughputController.percent</name><value>50.0</value><savedValue>0.0</savedValue></floatProp></ThroughputController>
+
+        <!-- 20% GET /items?categoryId -->
+        <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="20% GET /items?categoryId" enabled="true">
+          <intProp name="ThroughputController.style">1</intProp>
+          <boolProp name="ThroughputController.perThread">false</boolProp>
+          <doubleProp>
+            <name>ThroughputController.percent</name>
+            <value>20.0</value>
+            <savedValue>0.0</savedValue>
+          </doubleProp>
+        </ThroughputController>
         <hashTree>
-          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="PUT /items/{id}" enabled="true"><stringProp name="HTTPSampler.path">/items/${itemId}</stringProp><stringProp name="HTTPSampler.method">PUT</stringProp><boolProp name="HTTPSampler.postBodyRaw">true</boolProp><elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"><elementProp name="body" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">${payload}</stringProp><stringProp name="Argument.metadata">=</stringProp></elementProp></collectionProp></elementProp></HTTPSamplerProxy>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /items?categoryId" enabled="true">
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="categoryId" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">${categoryId}</stringProp><stringProp name="Argument.name">categoryId</stringProp></elementProp>
+              </collectionProp>
+            </elementProp>
+          </HTTPSamplerProxy>
+          <hashTree/>
+        </hashTree>
+
+        <!-- 20% GET /categories/{id}/items -->
+        <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="20% GET /categories/{id}/items" enabled="true">
+          <intProp name="ThroughputController.style">1</intProp>
+          <boolProp name="ThroughputController.perThread">false</boolProp>
+          <doubleProp>
+            <name>ThroughputController.percent</name>
+            <value>20.0</value>
+            <savedValue>0.0</savedValue>
+          </doubleProp>
+        </ThroughputController>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /categories/{id}/items" enabled="true">
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
+            <stringProp name="HTTPSampler.path">/categories/${categoryId}/items</stringProp>
+            <stringProp name="HTTPSampler.method">GET</stringProp>
+          </HTTPSamplerProxy>
+          <hashTree/>
+        </hashTree>
+
+        <!-- 10% GET /categories?page=0&size=50 -->
+        <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="10% GET /categories?page=0&size=50" enabled="true">
+          <intProp name="ThroughputController.style">1</intProp>
+          <boolProp name="ThroughputController.perThread">false</boolProp>
+          <doubleProp>
+            <name>ThroughputController.percent</name>
+            <value>10.0</value>
+            <savedValue>0.0</savedValue>
+          </doubleProp>
+        </ThroughputController>
+        <hashTree>
+          <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /categories?page=0&size=50" enabled="true">
+            <elementProp name="HTTPsampler.Arguments" elementType="Arguments">
+              <collectionProp name="Arguments.arguments">
+                <elementProp name="page" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">0</stringProp><stringProp name="Argument.name">page</stringProp></elementProp>
+                <elementProp name="size" elementType="HTTPArgument"><boolProp name="HTTPArgument.always_encode">false</boolProp><stringProp name="Argument.value">50</stringProp><stringProp name="Argument.name">size</stringProp></elementProp>
+              </collectionProp>
+            </elementProp>
+          </HTTPSamplerProxy>
           <hashTree/>
         </hashTree>
       </hashTree>
 
-      <!-- Stage 2: 60 threads -->
-      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="stage-2-60" enabled="true">
+      <!-- Stage 2: 100 threads -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="stage-2-100" enabled="true">
         <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
-        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true"><boolProp name="LoopController.continue_forever">false</boolProp><stringProp name="LoopController.loops">-1</stringProp></elementProp>
-        <stringProp name="ThreadGroup.num_threads">60</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">-1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">100</stringProp>
         <stringProp name="ThreadGroup.ramp_time">30</stringProp>
         <boolProp name="ThreadGroup.scheduler">true</boolProp>
         <stringProp name="ThreadGroup.duration">180</stringProp>
         <stringProp name="ThreadGroup.delay">180</stringProp>
+      </ThreadGroup>
+      <hashTree/>
+
+      <!-- Stage 3: 200 threads -->
+      <ThreadGroup guiclass="ThreadGroupGui" testclass="ThreadGroup" testname="stage-3-200" enabled="true">
+        <stringProp name="ThreadGroup.on_sample_error">continue</stringProp>
+        <elementProp name="ThreadGroup.main_controller" elementType="LoopController" guiclass="LoopControlPanel" testclass="LoopController" testname="Loop Controller" enabled="true">
+          <boolProp name="LoopController.continue_forever">false</boolProp>
+          <stringProp name="LoopController.loops">-1</stringProp>
+        </elementProp>
+        <stringProp name="ThreadGroup.num_threads">200</stringProp>
+        <stringProp name="ThreadGroup.ramp_time">30</stringProp>
+        <boolProp name="ThreadGroup.scheduler">true</boolProp>
+        <stringProp name="ThreadGroup.duration">180</stringProp>
+        <stringProp name="ThreadGroup.delay">360</stringProp>
       </ThreadGroup>
       <hashTree/>
     </hashTree>

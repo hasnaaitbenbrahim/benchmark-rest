@@ -7,6 +7,7 @@ import com.example.variantC.repository.ItemRepository;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -35,12 +36,14 @@ public class CategoryController {
 	}
 
 	@PostMapping
+	@Transactional
 	public ResponseEntity<Category> create(@RequestBody Category body) {
 		Category saved = categoryRepository.save(body);
 		return ResponseEntity.created(URI.create("/categories/" + saved.getId())).body(saved);
 	}
 
 	@PutMapping("/{id}")
+	@Transactional
 	public ResponseEntity<Category> update(@PathVariable Long id, @RequestBody Category body) {
 		return categoryRepository.findById(id)
 				.map(existing -> {
@@ -53,13 +56,13 @@ public class CategoryController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Transactional
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
-		return categoryRepository.findById(id)
-				.map(existing -> {
-					categoryRepository.delete(existing);
-					return ResponseEntity.noContent().build();
-				})
-				.orElse(ResponseEntity.notFound().build());
+		if (!categoryRepository.existsById(id)) {
+			return ResponseEntity.notFound().build();
+		}
+		categoryRepository.deleteById(id);
+		return ResponseEntity.noContent().build();
 	}
 
 	@GetMapping("/{id}/items")

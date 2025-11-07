@@ -10,12 +10,15 @@ JMETER_BIN=${JMETER_BIN:-jmeter}
 RESULTS_DIR=${RESULTS_DIR:-results}
 GIT_AUTO_PUSH=${GIT_AUTO_PUSH:-0}
 
-# Compose service host ports
-declare -A SERVICE_PORTS=(
-  [varianta]=8081
-  [variantc]=8082
-  [variantd]=8083
-)
+# Compose service host ports (using function for bash 3.2 compatibility)
+get_service_port() {
+  case "$1" in
+    varianta) echo "8081" ;;
+    variantc) echo "8082" ;;
+    variantd) echo "8083" ;;
+    *) echo "8080" ;;
+  esac
+}
 
 SCENARIOS=(read-heavy join-filter mixed heavy-body)
 
@@ -50,9 +53,9 @@ start_stack() {
   docker compose up -d varianta variantc variantd varianta-jmx
 
   log "Waiting for services to be ready"
-  wait_http "http://localhost:${SERVICE_PORTS[variantc]}/actuator/health" || true
-  wait_http "http://localhost:${SERVICE_PORTS[variantd]}/actuator/health" || true
-  wait_http "http://localhost:${SERVICE_PORTS[varianta]}/" || true
+  wait_http "http://localhost:$(get_service_port variantc)/actuator/health" || true
+  wait_http "http://localhost:$(get_service_port variantd)/actuator/health" || true
+  wait_http "http://localhost:$(get_service_port varianta)/" || true
 
   log "Waiting for Prometheus and Grafana"
   wait_http "http://localhost:9090/-/ready" || true
@@ -63,7 +66,9 @@ start_stack() {
 }
 
 run_scenarios_for_service() {
-  local service="$1" baseUrl="http://localhost:${SERVICE_PORTS[$1]}"
+  local service="$1"
+  local port=$(get_service_port "$1")
+  local baseUrl="http://localhost:${port}"
   mkdir -p "${RESULTS_DIR}/${service}"
   log "Running JMeter scenarios against ${service} (${baseUrl})"
   for s in "${SCENARIOS[@]}"; do

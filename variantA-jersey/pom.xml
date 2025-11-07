@@ -16,6 +16,18 @@
   </properties>
 
   <dependencies>
+
+  <dependency>
+    <groupId>org.glassfish.jersey.core</groupId>
+    <artifactId>jersey-server</artifactId>
+    <version>${jersey.version}</version>
+  </dependency>
+  <dependency>
+    <groupId>org.glassfish.jersey.inject</groupId>
+    <artifactId>jersey-hk2</artifactId>
+    <version>${jersey.version}</version>
+  </dependency>
+
     <!-- Jersey + Grizzly + Jackson -->
     <dependency>
       <groupId>org.glassfish.jersey.ext</groupId>
@@ -26,6 +38,12 @@
       <groupId>org.glassfish.jersey.media</groupId>
       <artifactId>jersey-media-json-jackson</artifactId>
       <version>${jersey.version}</version>
+    </dependency>
+    <!-- Jackson JSR310 module for Java 8 date/time support -->
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>${jackson.version}</version>
     </dependency>
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
@@ -60,6 +78,12 @@
       <artifactId>HikariCP</artifactId>
       <version>5.1.0</version>
     </dependency>
+    <!-- Hibernate HikariCP Integration -->
+    <dependency>
+      <groupId>org.hibernate.orm</groupId>
+      <artifactId>hibernate-hikaricp</artifactId>
+      <version>${hibernate.version}</version>
+    </dependency>
 
     <!-- Logging -->
     <dependency>
@@ -81,6 +105,26 @@
       </plugin>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
+        <artifactId>maven-shade-plugin</artifactId>
+        <version>3.5.0</version>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <transformers>
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>com.example.variantA.config.App</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
         <version>3.4.2</version>
         <configuration>
@@ -94,5 +138,10 @@
         </configuration>
       </plugin>
     </plugins>
+    <plugin>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-maven-plugin</artifactId>
+</plugin>
+
   </build>
 </project>

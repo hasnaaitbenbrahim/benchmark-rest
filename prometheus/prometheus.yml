@@ -1,0 +1,23 @@
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']
+
+  - job_name: 'varianta-jmx'
+    static_configs:
+      - targets: ['varianta:9404']
+
+  - job_name: 'variantc-actuator'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['variantc:8080']
+
+  - job_name: 'variantd-actuator'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['variantd:8080']
+

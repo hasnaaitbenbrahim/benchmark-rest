@@ -4,9 +4,11 @@ import com.example.variantC.entity.Category;
 import com.example.variantC.entity.Item;
 import com.example.variantC.repository.CategoryRepository;
 import com.example.variantC.repository.ItemRepository;
+import jakarta.persistence.EntityManager;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
 import java.net.URI;
@@ -16,10 +18,12 @@ import java.net.URI;
 public class ItemController {
 	private final ItemRepository itemRepository;
 	private final CategoryRepository categoryRepository;
+	private final EntityManager entityManager;
 
-	public ItemController(ItemRepository itemRepository, CategoryRepository categoryRepository) {
+	public ItemController(ItemRepository itemRepository, CategoryRepository categoryRepository, EntityManager entityManager) {
 		this.itemRepository = itemRepository;
 		this.categoryRepository = categoryRepository;
+		this.entityManager = entityManager;
 	}
 
 	@GetMapping
@@ -38,18 +42,30 @@ public class ItemController {
 	}
 
 	@PostMapping
+	@Transactional
 	public ResponseEntity<Item> create(@RequestBody Item body) {
 		if (body.getCategory() != null && body.getCategory().getId() != null) {
-			Category category = categoryRepository.findById(body.getCategory().getId()).orElse(null);
-			if (category == null) return ResponseEntity.badRequest().build();
-			body.setCategory(category);
+			if (!categoryRepository.existsById(body.getCategory().getId())) {
+				return ResponseEntity.badRequest().build();
+			}
+			// Use getReference for better performance (lazy loading)
+			Category categoryRef = entityManager.getReference(Category.class, body.getCategory().getId());
+			body.setCategory(categoryRef);
 		}
 		Item saved = itemRepository.save(body);
 		return ResponseEntity.created(URI.create("/items/" + saved.getId())).body(saved);
 	}
 
 	@PutMapping("/{id}")
+	@Transactional
 	public ResponseEntity<Item> update(@PathVariable Long id, @RequestBody Item body) {
+		// Validate category if provided
+		if (body.getCategory() != null && body.getCategory().getId() != null) {
+			if (!categoryRepository.existsById(body.getCategory().getId())) {
+				return ResponseEntity.badRequest().build();
+			}
+		}
+		
 		return itemRepository.findById(id)
 				.map(existing -> {
 					existing.setSku(body.getSku());
@@ -57,9 +73,9 @@ public class ItemController {
 					existing.setPrice(body.getPrice());
 					existing.setStock(body.getStock());
 					if (body.getCategory() != null && body.getCategory().getId() != null) {
-						Category category = categoryRepository.findById(body.getCategory().getId()).orElse(null);
-						if (category == null) return ResponseEntity.badRequest().build();
-						existing.setCategory(category);
+						// Use getReference for better performance (lazy loading)
+						Category categoryRef = entityManager.getReference(Category.class, body.getCategory().getId());
+						existing.setCategory(categoryRef);
 					}
 					Item saved = itemRepository.save(existing);
 					return ResponseEntity.ok(saved);
@@ -68,12 +84,12 @@ public class ItemController {
 	}
 
 	@DeleteMapping("/{id}")
+	@Transactional
 	public ResponseEntity<Void> delete(@PathVariable Long id) {
-		return itemRepository.findById(id)
-				.map(existing -> {
-					itemRepository.delete(existing);
-					return ResponseEntity.noContent().build();
-				})
-				.orElse(ResponseEntity.notFound().build());
+		if (!itemRepository.existsById(id)) {
+			return ResponseEntity.notFound().build();
+		}
+		itemRepository.deleteById(id);
+		return ResponseEntity.noContent().build();
 	}
 }

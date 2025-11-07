@@ -29,9 +29,9 @@
 
       <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults" enabled="true">
         <elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
-        <stringProp name="HTTPSampler.domain">${__BeanShell(new java.net.URL(vars.get("baseUrl")).getHost(),)}</stringProp>
-        <stringProp name="HTTPSampler.port">${__BeanShell(new java.net.URL(vars.get("baseUrl")).getPort()==-1?"80":new java.net.URL(vars.get("baseUrl")).getPort(),)}</stringProp>
-        <stringProp name="HTTPSampler.protocol">${__BeanShell(new java.net.URL(vars.get("baseUrl")).getProtocol(),)}</stringProp>
+        <stringProp name="HTTPSampler.domain">${__BeanShell(new java.net.URL(props.get("baseUrl")).getHost(),)}</stringProp>
+        <stringProp name="HTTPSampler.port">${__BeanShell(int port = new java.net.URL(props.get("baseUrl")).getPort(); return port == -1 ? "80" : String.valueOf(port);)}</stringProp>
+        <stringProp name="HTTPSampler.protocol">${__BeanShell(new java.net.URL(props.get("baseUrl")).getProtocol(),)}</stringProp>
         <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
       </ConfigTestElement>
       <hashTree/>

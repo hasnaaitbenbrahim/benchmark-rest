@@ -32,9 +32,9 @@
 
       <ConfigTestElement guiclass="HttpDefaultsGui" testclass="ConfigTestElement" testname="HTTP Request Defaults" enabled="true">
         <elementProp name="HTTPsampler.Arguments" elementType="Arguments"><collectionProp name="Arguments.arguments"/></elementProp>
-        <stringProp name="HTTPSampler.domain">${__BeanShell(new java.net.URL(vars.get("baseUrl")).getHost(),)}</stringProp>
-        <stringProp name="HTTPSampler.port">${__BeanShell(new java.net.URL(vars.get("baseUrl")).getPort()==-1?"80":new java.net.URL(vars.get("baseUrl")).getPort(),)}</stringProp>
-        <stringProp name="HTTPSampler.protocol">${__BeanShell(new java.net.URL(vars.get("baseUrl")).getProtocol(),)}</stringProp>
+        <stringProp name="HTTPSampler.domain">${__BeanShell(new java.net.URL(props.get("baseUrl")).getHost(),)}</stringProp>
+        <stringProp name="HTTPSampler.port">${__BeanShell(int port = new java.net.URL(props.get("baseUrl")).getPort(); return port == -1 ? "80" : String.valueOf(port);)}</stringProp>
+        <stringProp name="HTTPSampler.protocol">${__BeanShell(new java.net.URL(props.get("baseUrl")).getProtocol(),)}</stringProp>
         <stringProp name="HTTPSampler.contentEncoding">UTF-8</stringProp>
       </ConfigTestElement>
       <hashTree/>
@@ -66,14 +66,10 @@
         <stringProp name="ThreadGroup.delay">0</stringProp>
       </ThreadGroup>
       <hashTree>
-        <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="50% GET /items?page&size=50" enabled="true">
+        <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="50% GET /items?page&amp;size=50" enabled="true">
           <intProp name="ThroughputController.style">1</intProp>
           <boolProp name="ThroughputController.perThread">false</boolProp>
-          <floatProp>
-            <name>ThroughputController.percent</name>
-            <value>50.0</value>
-            <savedValue>0.0</savedValue>
-          </floatProp>
+          <stringProp name="ThroughputController.percent">50.0</stringProp>
         </ThroughputController>
         <hashTree>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /items?page&amp;size=50" enabled="true">
@@ -97,7 +93,7 @@
         <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="20% GET /items?categoryId" enabled="true">
           <intProp name="ThroughputController.style">1</intProp>
           <boolProp name="ThroughputController.perThread">false</boolProp>
-          <floatProp><name>ThroughputController.percent</name><value>20.0</value><savedValue>0.0</savedValue></floatProp>
+          <stringProp name="ThroughputController.percent">20.0</stringProp>
         </ThroughputController>
         <hashTree>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /items?categoryId" enabled="true">
@@ -116,7 +112,7 @@
         <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="20% GET /categories/{id}/items" enabled="true">
           <intProp name="ThroughputController.style">1</intProp>
           <boolProp name="ThroughputController.perThread">false</boolProp>
-          <floatProp><name>ThroughputController.percent</name><value>20.0</value><savedValue>0.0</savedValue></floatProp>
+          <stringProp name="ThroughputController.percent">20.0</stringProp>
         </ThroughputController>
         <hashTree>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /categories/{id}/items" enabled="true">
@@ -130,7 +126,7 @@
         <ThroughputController guiclass="ThroughputControllerGui" testclass="ThroughputController" testname="10% GET /categories?page&amp;size" enabled="true">
           <intProp name="ThroughputController.style">1</intProp>
           <boolProp name="ThroughputController.perThread">false</boolProp>
-          <floatProp><name>ThroughputController.percent</name><value>10.0</value><savedValue>0.0</savedValue></floatProp>
+          <stringProp name="ThroughputController.percent">10.0</stringProp>
         </ThroughputController>
         <hashTree>
           <HTTPSamplerProxy guiclass="HttpTestSampleGui" testclass="HTTPSamplerProxy" testname="GET /categories?page&amp;size" enabled="true">
